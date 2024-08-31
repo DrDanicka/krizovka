@@ -1,5 +1,10 @@
-krizovka(VelkostKrizovky) :-
-    najdi_krizovku(VelkostKrizovky).
+krizovka(Slovnik, Tajanka, TajankaSmer, VyskaKrizovky, SirkaKrizovky) :- 
+    najdi_krizovku(Slovnik, Tajanka, TajankaSmer, VyskaKrizovky, SirkaKrizovky, PolozeneSlova, _),
+    vypis_plochu(VyskaKrizovky, SirkaKrizovky),
+    write('\n\n'),
+    vypis_poziciu_tajanky(VyskaKrizovky, SirkaKrizovky, TajankaSmer),
+    write('\n\n'),
+    vypis_napovedy(PolozeneSlova), !.
 
 najdi_krizovku(VelkostKrizovky, Slova, Plocha, PouziteSlova) :- 
     vytvor_plochu_krizovky(VelkostKrizovky, Plocha1),
