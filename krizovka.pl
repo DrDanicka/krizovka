@@ -25,6 +25,7 @@ najdi_krizovku(Slovnik, Tajanka, TajankaSmer, VyskaKrizovky, SirkaKrizovky, Polo
     prirad_slova(Slovnik, [], Pozicie, VyskaKrizovky, SirkaKrizovky, PlochaSTajankou, Grid, PolozeneSlova).
 
 
+
 % ----------------------------------------------------------------
 % Predikat prirad_slova, sa pokusi vlozit slova zo slovniku na plochu krizovky
 prirad_slova(_, PolozeneSlova, [], _, _, G, G, PolozeneSlova).
@@ -39,31 +40,44 @@ prirad_slova(Slova, PolozeneSlova, [Pozicia|ZvysnePozicie], VyskaKrizovky, Sirka
     prirad_slova(PremazaneSlova, [PolozeneSlovo|PolozeneSlova], ZvysnePozicie, VyskaKrizovky, SirkaKrizovky, VytvorenaPlocha, VystupnyGrid, PolozeneSlovaOut).
 
 % ----------------------------------------------------------------
-% Base case pouzije zacinajuce slovo ak sme na zaciatku
-najdi_pretinajuce_slova(_, _, [], _, _, _).
 
 
-najdi_pretinajuce_slova(ListPismen, DlzkaListuPismen, PouziteSlova, VelkostKrizovky, OkienkoNaPloche, Smer) :-
-    memebr([_, _, PouzityListPismen, _, PouzitySmer, _, PouziteOkienkoNaPloche, _], PouziteSlova),
-    intersection(ListPismen, PouzityListPismen, Prienik),
-    list_to_set(Prienik, PrienikMnozina),
-    member(Pismeno, PrienikMnozina),
-    pozicie(Pismeno, PouzityListPismen, PouzitePozicie),
-    pozicie(Pismeno, ListPismen, Pozicie),
-    pozicia_na_ploche(VelkostKrizovky, PouzitySmer, PouziteOkienkoNaPloche, PouzitePozicie, OkienkoPrieniku),
-    opacne_smery(PouzitySmer, Smer),
-    pozicia_zaciatku_na_ploche(Smer, VelkostKrizovky, Pozicie, OkienkoPrieniku, Zaciatok),
-    je_na_ploche(Smer, Zaciatok, DlzkaListuPismen, VelkostKrizovky).
+
+% ----------------------------------------------------------------
+% Predikat zapise pismena na plochu krizovky
+prirad_pismena([], _, _, [], G, G).
+
+prirad_pismena([Pismeno|ZvysokPismen], Smer, Dlzka, [Okienko|ZvysokOkienok], VstupnyGrid, VystupnyGrid):-
+    get_assoc(Okienko, VstupnyGrid, X),
+    (
+    % AK tam je rovnake pismeno tak parada
+    X == Pismeno,
+    VytvorenaPlocha = VstupnyGrid
+    ;
+    % Ak tam je prazdne, tak to tam pridam
+    X == empty,
+    put_assoc(Okienko, VstupnyGrid, Pismeno, VytvorenaPlocha)
+    ), !, 
+    prirad_pismena(ZvysokPismen, Smer, Dlzka, ZvysokOkienok, VytvorenaPlocha, VystupnyGrid).
+% ----------------------------------------------------------------
 
 
-prirad_slovo(Slovo, ListPismen, DlzkaSlova, Napoveda, Zaciatok, Smer, VelkostKrizovky, PlochaIn, PolozeneSlovo, PlochaOut) :-
-    % TODO kontrola, ze pred okienkom nic nie je
-    prirad_pismena(ListPismen, Zaciatok, Smer, VelkostKrizovky, Okienka, PlochaIn, PlochaOut),
-    PolozeneSlovo = [Slovo, Napoveda, ListPismen, Okienka, Smer, DlzkaSlova, Zaciatok, _CisloNapovedy].
 
+% ----------------------------------------------------------------
+% Predikat, ktory podla Zaciatocneho okienka a Smeru priradi Slovo na plochu krizovky
+prirad_slovo(Slovo, ListPismen, DlzkaSlova, Napoveda, OkienkoZaciatku, Smer, VyskaKrizovky, SirkaKrizovky, VstupnyGrid, VystupnyGrid, PolozeneSlovo) :-
+    get_cisla_okienok_pre_slovo(DlzkaSlova, OkienkoZaciatku, Smer, Okienka, VyskaKrizovky, SirkaKrizovky),
+    prirad_pismena(ListPismen, Smer, DlzkaSlova, Okienka, VstupnyGrid, VystupnyGrid),
+    Okienka = [PrveOkienko|_],
+    ( Smer = doprava ->
+        NewPrveOkienkoZeroBased is PrveOkienko // SirkaKrizovky,  % Divide PrveOkienko by SirkaKrizovky if Smer is 'dole'
+        NewPrveOkienko is NewPrveOkienkoZeroBased + 1
+    ; 
+        NewPrveOkienko = PrveOkienko  % Otherwise, keep PrveOkienko as is
+    ),
+    PolozeneSlovo = [Smer, NewPrveOkienko, Napoveda].  % Use the new or unchanged value of PrveOkienko
+% ----------------------------------------------------------------
 
-opacne_smery(doprava, dole).
-opacne_smery(dole, doprava).
 
 
 % Vypocita okienko na ploche pismena prieniku
