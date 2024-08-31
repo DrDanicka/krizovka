@@ -146,10 +146,39 @@ prirad_tajanku(Tajanka, TajankaSmer, Okienko, VyskaKrizovky, SirkaKrizovky, Vstu
 
 
 % ----------------------------------------------------------------
+% Vrati cisla policok, kde sa bude slovo nachadzat podla Okienka
+get_cisla_okienok_pre_slovo(DlzkaSlova,  Okienko, doprava, Okienka, VyskaKrizovky, SirkaKrizovky) :-
+    DlzkaSlova == SirkaKrizovky,
+    get_cisla_okienok_pre_slovo_skontrolovana_dlzka(DlzkaSlova, Okienko, doprava, Okienka, VyskaKrizovky, SirkaKrizovky),
+    !.
+
+
+get_cisla_okienok_pre_slovo(DlzkaSlova,  Okienko, dole, Okienka, VyskaKrizovky, SirkaKrizovky) :-
+    DlzkaSlova == VyskaKrizovky,
+    get_cisla_okienok_pre_slovo_skontrolovana_dlzka(DlzkaSlova, Okienko, dole, Okienka, VyskaKrizovky, SirkaKrizovky),
+    !.
+
+get_cisla_okienok_pre_slovo_skontrolovana_dlzka(1, AktualneOkienko, _, [AktualneOkienko], VyskaKrizovky, SirkaKrizovky).
+
+
+get_cisla_okienok_pre_slovo_skontrolovana_dlzka(DlzkaSlova,  Okienko, doprava, [Okienko|Zvysok], VyskaKrizovky, SirkaKrizovky) :-
+    NovaDlzka is DlzkaSlova - 1,
+    NoveOkianko is Okienko + 1,
+    get_cisla_okienok_pre_slovo_skontrolovana_dlzka(NovaDlzka, NoveOkianko, doprava, Zvysok, VyskaKrizovky, SirkaKrizovky).
+
+get_cisla_okienok_pre_slovo_skontrolovana_dlzka(DlzkaSlova, Okienko, dole, [Okienko|Zvysok], VyskaKrizovky, SirkaKrizovky) :-
+    NovaDlzka is DlzkaSlova - 1,
+    NoveOkianko is Okienko + SirkaKrizovky,
+    get_cisla_okienok_pre_slovo_skontrolovana_dlzka(NovaDlzka, NoveOkianko, dole, Zvysok, VyskaKrizovky, SirkaKrizovky).
+% ----------------------------------------------------------------
+
+
+
+% ----------------------------------------------------------------
 % vymaz(X,L,R) :- R je L s vymazanym prvym X
 vymaz(Y,[X|Xs],[X|Tail]) :-
 	Y \== X,
 	vymaz(Y,Xs,Tail).
 vymaz(X,[X|Xs],Xs) :- !.
 vymaz(_,[],[]).
-% ----------------------------------------------------------------
+% ----------------------------------------------------------------v
