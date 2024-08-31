@@ -175,6 +175,19 @@ get_cisla_okienok_pre_slovo_skontrolovana_dlzka(DlzkaSlova, Okienko, dole, [Okie
 
 
 % ----------------------------------------------------------------
+% Predikat vytvori plochu krizovky
+prazdne_okienko(Okienko, Okienko-empty).
+
+vytvor_plochu(VyskaKrizovky, SirkaKrizovky, Plocha) :- %
+    PocetOkienok is VyskaKrizovky * SirkaKrizovky, %
+    numlist(1, PocetOkienok, Okienka), %
+    maplist(prazdne_okienko, Okienka, TupleOkienka), %
+    list_to_assoc(TupleOkienka, Plocha). %
+% ----------------------------------------------------------------
+
+
+
+% ----------------------------------------------------------------
 % vymaz(X,L,R) :- R je L s vymazanym prvym X
 vymaz(Y,[X|Xs],[X|Tail]) :-
 	Y \== X,
