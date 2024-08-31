@@ -194,4 +194,91 @@ vymaz(Y,[X|Xs],[X|Tail]) :-
 	vymaz(Y,Xs,Tail).
 vymaz(X,[X|Xs],Xs) :- !.
 vymaz(_,[],[]).
-% ----------------------------------------------------------------v
+% ----------------------------------------------------------------
+
+
+
+% ----------------------------------------------------------------
+% Predikat na vypisovanie Krizovky
+vypis_plochu(VyskaKrizovky, SirkaKrizovky) :-
+    vypis_hlavicku(SirkaKrizovky),
+    vypis_riadky(1, VyskaKrizovky, SirkaKrizovky).
+
+% Helper predicate to print the header row
+vypis_hlavicku(SirkaKrizovky) :-
+    write('  '), % Start with spaces to align column numbers
+    vypis_cisla(1, SirkaKrizovky),
+    nl.
+
+% Helper predicate to print column numbers
+vypis_cisla(Start, End) :-
+    Start =< End,
+    write(Start), write(' '),
+    Next is Start + 1,
+    vypis_cisla(Next, End).
+vypis_cisla(Start, End) :-
+    Start > End. % Base case
+
+% Helper predicate to print all rows
+vypis_riadky(CurrentRow, VyskaKrizovky, SirkaKrizovky) :-
+    CurrentRow =< VyskaKrizovky,
+    write(CurrentRow), write(' '), % Print row number
+    vypis_hviezdicky(SirkaKrizovky),
+    nl,
+    NextRow is CurrentRow + 1,
+    vypis_riadky(NextRow, VyskaKrizovky, SirkaKrizovky).
+vypis_riadky(CurrentRow, VyskaKrizovky, _) :-
+    CurrentRow > VyskaKrizovky. % Base case
+
+% Helper predicate to print stars for a row
+vypis_hviezdicky(0) :- !. % Base case
+vypis_hviezdicky(N) :-
+    N > 0,
+    write('* '),
+    N1 is N - 1,
+    vypis_hviezdicky(N1).
+
+% ----------------------------------------------------------------
+
+
+
+% ----------------------------------------------------------------
+% Predikat na vypisanie pozicie tajanky
+vypis_poziciu_tajanky(VyskaKrizovky, SirkaKrizovky, Smer) :- 
+    vrat_okienko_tajanky(VyskaKrizovky, SirkaKrizovky, Smer, OkienkoTajanky),
+    ( Smer = doprava ->
+        NewPrveOkienkoZeroBased is OkienkoTajanky // SirkaKrizovky,  % Divide PrveOkienko by SirkaKrizovky if Smer is 'dole'
+        NewPrveOkienko is NewPrveOkienkoZeroBased + 1,
+        write('Tajanka sa nachadza v riadku cislo '),
+        write(NewPrveOkienko)
+    ; 
+        write('Tajanka sa nachadza v stlpci cislo '),
+        write(OkienkoTajanky)
+    ).
+% ----------------------------------------------------------------
+
+
+
+% ----------------------------------------------------------------
+% Predikat na vypis napovied
+napoveda_je_doprava([doprava, _, _]).
+
+vypis_napovedy(ListNapovied) :- 
+    partition(napoveda_je_doprava, ListNapovied, DopravaNapovedy, ReversedDoleNapovedy),
+    write('Napovedy doprava: \n'),
+    vypis_jednu_napovedu(DopravaNapovedy),
+    nl,
+    write('Napovedy dole: \n'),
+    reverse(ReversedDoleNapovedy, DoleNapovedy),
+    vypis_jednu_napovedu(DoleNapovedy),
+    nl.
+
+
+vypis_jednu_napovedu([]).
+vypis_jednu_napovedu([[_, Cislo, Napoveda]|ZvysokNapovied]) :-
+    write(Cislo),
+    write('. '),
+    write(Napoveda),
+    nl,
+    vypis_jednu_napovedu(ZvysokNapovied).
+% ----------------------------------------------------------------
