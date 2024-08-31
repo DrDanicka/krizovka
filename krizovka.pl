@@ -24,28 +24,21 @@ najdi_krizovku(Slovnik, Tajanka, TajankaSmer, VyskaKrizovky, SirkaKrizovky, Polo
     % Prirad slova zo slovnika do krizovky
     prirad_slova(Slovnik, [], Pozicie, VyskaKrizovky, SirkaKrizovky, PlochaSTajankou, Grid, PolozeneSlova).
 
-prazdne_okienko(Okienko, Okienko-prazdne).
 
-% Vytvori plochu krizovky
-vytvor_plochu_krizovky(VelkostKrizovky, Plocha) :- 
-    PocetOkienok is VelkostKrizovky * VelkostKrizovky,
-    numlist(1, PocetOkienok, Okienka),
-    maplist(prazdne_okienko, Okienka, DvojiceOkienok),
-    list_to_assoc(DvojiceOkienok, Plocha).
+% ----------------------------------------------------------------
+% Predikat prirad_slova, sa pokusi vlozit slova zo slovniku na plochu krizovky
+prirad_slova(_, PolozeneSlova, [], _, _, G, G, PolozeneSlova).
 
-
-prirad_slova([], PouziteSlova, _, _, _, Plocha, Plocha, PouziteSlova).
-
-prirad_slova(Slova, PouziteSlovaIn, VelkostKrizovky, OkienkoNaPloche, Smer, PlochaIn, PlochaOut, PouziteSlovaOut) :- 
+prirad_slova(Slova, PolozeneSlova, [Pozicia|ZvysnePozicie], VyskaKrizovky, SirkaKrizovky, VstupnyGrid, VystupnyGrid, PolozeneSlovaOut) :-
     member([Slovo, Napoveda], Slova),
     atom_chars(Slovo, ListPismen),
-    length(ListPismen, DlzkaListuPismen),
-    najdi_pretinajuce_slova(ListPismen, DlzkaListuPismen, PouziteSlovaIn, VelkostKrizovky, OkienkoNaPloche, Smer),
-    prirad_slovo(Slovo, ListPismen, DlzkaListuPismen, Napoveda, OkienkoNaPloche, Smer, VelkostKrizovky, PlochaIn, PouziteSlovo, Plocha1),
-    vymaz([Slovo, Napoveda], Slova, NoveSlova),
-    prirad_slova(NoveSlova, [PouziteSlovo|PouziteSlovaIn], VelkostKrizovky, _Zaciatok, _Smer, Plocha1, PlochaOut, PouziteSlovaOut).
+    length(ListPismen, DlzkaSlova),
+    Pozicia = Okienko-Smer,
+    prirad_slovo(Slovo, ListPismen, DlzkaSlova, Napoveda, Okienko, Smer, VyskaKrizovky, SirkaKrizovky, VstupnyGrid, VytvorenaPlocha, PolozeneSlovo),
+    remove_x([Slovo, Napoveda], Slova, PremazaneSlova),
+    prirad_slova(PremazaneSlova, [PolozeneSlovo|PolozeneSlova], ZvysnePozicie, VyskaKrizovky, SirkaKrizovky, VytvorenaPlocha, VystupnyGrid, PolozeneSlovaOut).
 
-
+% ----------------------------------------------------------------
 % Base case pouzije zacinajuce slovo ak sme na zaciatku
 najdi_pretinajuce_slova(_, _, [], _, _, _).
 
