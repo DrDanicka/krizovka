@@ -119,9 +119,37 @@ vytvor_pozicie(GridWidth, GridHeight, SkipPos, Result) :-
 
 % ----------------------------------------------------------------
 
+
+
+% ----------------------------------------------------------------
+% Predikaty, ktore vratia okienko tajanky, kde ma zacinat
+vrat_okienko_tajanky(VyskaKrizovky, SirkaKrizovky, dole, Okienko) :-
+    Stred is div(SirkaKrizovky, 2),
+    Okienko is Stred + 1, !.
+
+vrat_okienko_tajanky(VyskaKrizovky, SirkaKrizovky, doprava, Okienko) :-
+    Riadok is div(VyskaKrizovky, 2), 
+    KoniecPredchRiadku is Riadok * SirkaKrizovky,
+    Okienko is KoniecPredchRiadku + 1, !.
+% ----------------------------------------------------------------
+
+
+
+% ----------------------------------------------------------------
+% Tento predikat vlozi tajanku na grid podla Okienka, kde zacina
+prirad_tajanku(Tajanka, TajankaSmer, Okienko, VyskaKrizovky, SirkaKrizovky, VstupnaPlocha, VystupnaPlocha) :-
+    atom_chars(Tajanka, PismenaTajanky), % Zmenim si Tajanku na list pismen
+    length(PismenaTajanky, DlzkaTajanky), % Zistim velkost tajanky
+    prirad_slovo(Tajanka, PismenaTajanky, DlzkaTajanky, tajanka, Okienko, TajankaSmer, VyskaKrizovky, SirkaKrizovky, VstupnaPlocha, VystupnaPlocha, PriradeneSlovo).
+% ----------------------------------------------------------------
+
+
+
+% ----------------------------------------------------------------
 % vymaz(X,L,R) :- R je L s vymazanym prvym X
 vymaz(Y,[X|Xs],[X|Tail]) :-
 	Y \== X,
 	vymaz(Y,Xs,Tail).
 vymaz(X,[X|Xs],Xs) :- !.
 vymaz(_,[],[]).
+% ----------------------------------------------------------------
