@@ -1,3 +1,4 @@
+% Hlavny predikat krizovka
 krizovka(Slovnik, Tajanka, TajankaSmer, VyskaKrizovky, SirkaKrizovky) :- 
     najdi_krizovku(Slovnik, Tajanka, TajankaSmer, VyskaKrizovky, SirkaKrizovky, PolozeneSlova, _),
     vypis_plochu(VyskaKrizovky, SirkaKrizovky),
@@ -6,9 +7,22 @@ krizovka(Slovnik, Tajanka, TajankaSmer, VyskaKrizovky, SirkaKrizovky) :-
     write('\n\n'),
     vypis_napovedy(PolozeneSlova), !.
 
-najdi_krizovku(VelkostKrizovky, Slova, Plocha, PouziteSlova) :- 
-    vytvor_plochu_krizovky(VelkostKrizovky, Plocha1),
-    prirad_slova(Slova, [], VelkostKrizovky, 1, dole, Plocha1, Plocha, PouziteSlova).
+najdi_krizovku(Slovnik, Tajanka, TajankaSmer, VyskaKrizovky, SirkaKrizovky, PolozeneSlova, Grid) :-
+    % Vytvorime si plochu krizovky
+    vytvor_plochu(VyskaKrizovky, SirkaKrizovky, VytvorenaPlocha),
+
+    % Dostanem cislo Okienka, kde chceme aby zacinala nasa Tajanka
+    vrat_okienko_tajanky(VyskaKrizovky, SirkaKrizovky, TajankaSmer, OkienkoTajanky), % OkienkoTajanky je okienko, kde zacina tajanka
+    
+    % Vlozime Tajanku do krizovky
+    prirad_tajanku(Tajanka, TajankaSmer, OkienkoTajanky, VyskaKrizovky, SirkaKrizovky, VytvorenaPlocha, PlochaSTajankou),
+
+    % Vygeneruje pozicie, kde budeme chciet umiestnit nase slova okrem Tajanky
+    % Pozicie su list: [Okienko-Smer, ...] -> napr [1-dole, 2-dole, 1-doprava, 3-doprava]
+    vytvor_pozicie(SirkaKrizovky, VyskaKrizovky, OkienkoTajanky, Pozicie),
+
+    % Prirad slova zo slovnika do krizovky
+    prirad_slova(Slovnik, [], Pozicie, VyskaKrizovky, SirkaKrizovky, PlochaSTajankou, Grid, PolozeneSlova).
 
 prazdne_okienko(Okienko, Okienko-prazdne).
 
