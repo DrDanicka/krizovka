@@ -36,7 +36,7 @@ prirad_slova(Slova, PolozeneSlova, [Pozicia|ZvysnePozicie], VyskaKrizovky, Sirka
     length(ListPismen, DlzkaSlova),
     Pozicia = Okienko-Smer,
     prirad_slovo(Slovo, ListPismen, DlzkaSlova, Napoveda, Okienko, Smer, VyskaKrizovky, SirkaKrizovky, VstupnyGrid, VytvorenaPlocha, PolozeneSlovo),
-    remove_x([Slovo, Napoveda], Slova, PremazaneSlova),
+    vymaz([Slovo, Napoveda], Slova, PremazaneSlova),
     prirad_slova(PremazaneSlova, [PolozeneSlovo|PolozeneSlova], ZvysnePozicie, VyskaKrizovky, SirkaKrizovky, VytvorenaPlocha, VystupnyGrid, PolozeneSlovaOut).
 
 % ----------------------------------------------------------------
@@ -80,41 +80,44 @@ prirad_slovo(Slovo, ListPismen, DlzkaSlova, Napoveda, OkienkoZaciatku, Smer, Vys
 
 
 
-% Vypocita okienko na ploche pismena prieniku
-pozicia_na_ploche(VelkostKrizovky, doprava, WPos, WStart, Pozicia) :-
-    Pozicia is  WStart + (WPos - 1).
-pozicia_na_ploche(VelkostKrizovky, dole, WPos, WStart, Pozicia) :-
-    Pozicia is  WStart + (VelkostKrizovky * (WPos - 1)).
+% ----------------------------------------------------------------
+% Predikat vygeneruje pozicie na ploche
+% Base case for generating the first row, with skipping logic
+generate_first_row(0, _, _, _, []) :- !.
+generate_first_row(N, GridWidth, GridHeight, SkipPos, [Pos-dole|Rest]) :-
+    N > 0,
+    Pos is GridWidth - N + 1,
+    Pos \= SkipPos,  % Skip the position if it matches SkipPos
+    N1 is N - 1,
+    generate_first_row(N1, GridWidth, GridHeight, SkipPos, Rest).
+generate_first_row(N, GridWidth, GridHeight, SkipPos, Rest) :-
+    N > 0,
+    Pos is GridWidth - N + 1,
+    Pos = SkipPos,  % If the position matches SkipPos, skip it
+    N1 is N - 1,
+    generate_first_row(N1, GridWidth, GridHeight, SkipPos, Rest).
 
+% Base case for generating the first column, with skipping logic
+generate_first_column(_, _, 0, _, []) :- !.
+generate_first_column(GridWidth, GridHeight, N, SkipPos, [Pos-doprava|Rest]) :-
+    N > 0,
+    Pos is (N - 1) * GridWidth + 1,
+    Pos \= SkipPos,  % Skip the position if it matches SkipPos
+    N1 is N - 1,
+    generate_first_column(GridWidth, GridHeight, N1, SkipPos, Rest).
+generate_first_column(GridWidth, GridHeight, N, SkipPos, Rest) :-
+    N > 0,
+    Pos is (N - 1) * GridWidth + 1,
+    Pos = SkipPos,  % If the position matches SkipPos, skip it
+    N1 is N - 1,
+    generate_first_column(GridWidth, GridHeight, N1, SkipPos, Rest).
 
-% Vypocita okienko na ploche zaciatku slova
-pozicia_zaciatku_na_ploche(VelkostKrizovky, doprava, PPos, WNum, Zaciatok) :-
-    Zaciatok is WNum - (PPos - 1).
-pozicia_zaciatku_na_ploche(VelkostKrizovky, dole, PPos, WNum, Zaciatok) :-
-    Zaciatok is WNum - (VelkostKrizovky * (PPos - 1)).
+vytvor_pozicie(GridWidth, GridHeight, SkipPos, Result) :-
+    generate_first_row(GridWidth, GridWidth, GridHeight, SkipPos, FirstRow),
+    generate_first_column(GridWidth, GridHeight, GridHeight, SkipPos, FirstColumn),
+    append(FirstRow, FirstColumn, Result), !.
 
-
-% Najde vsetky pozicie X v Liste pomocou backtrackingu
-pozicie(X, List, Pozicie) :- pozicie_backtrack(List, X, 1, Pozicie).
-pozicie_backtrack([], _, _, _) :- false.
-pozicie_backtrack([X|_], X, Pos, Pos).
-pozicie_backtrack([_|Ys], X, N, Pos) :-
-    N2 is N + 1,
-    pozicie_backtrack(Ys, X, N2, Pos).
-
-
-% Kontrola, ci sa slovo zmensti do riadka
-je_na_ploche(doprava, Zaciatok, DlzkaSlova, VelkostKrizovky) :- 
-    M is Zaciatok mod VelkostKrizovky,
-    M \== 0,
-    Medzera is VelkostKrizovky - (M - 1),
-    DlzkaSlova =< Medzera.
-
-% Kontrola, ci sa slovo zmensti do stlpca
-je_na_ploche(dole, Zaciatok, DlzkaSlova, VelkostKrizovky) :- 
-     Koniec is Zaciatok + (VelkostKrizovky * (DlzkaSlova - 1)),
-     Koniec =< VelkostKrizovky * VelkostKrizovky.
-
+% ----------------------------------------------------------------
 
 % vymaz(X,L,R) :- R je L s vymazanym prvym X
 vymaz(Y,[X|Xs],[X|Tail]) :-
