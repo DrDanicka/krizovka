@@ -1,3 +1,5 @@
+:- consult('slovnik.pl').
+
 % kizovka(+Slovnik, +Tajenka, +TajenkaSmer, +VyskaKrizovky, +SirkaKrizovky) :-
 % krizovka je hlavny predikat, ktory hlada krizovku a vypisuje ju. Ako argumenty
 % berie Slovnik, co je list listov, kde kazdy vnutorny list obsahuje Slovo a Napovedu, 
