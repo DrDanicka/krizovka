@@ -1,161 +1,216 @@
-% Hlavny predikat krizovka
-krizovka(Slovnik, Tajanka, TajankaSmer, VyskaKrizovky, SirkaKrizovky) :- 
-    najdi_krizovku(Slovnik, Tajanka, TajankaSmer, VyskaKrizovky, SirkaKrizovky, PolozeneSlova, _),
+% kizovka(+Slovnik, +Tajenka, +TajenkaSmer, +VyskaKrizovky, +SirkaKrizovky) :-
+% krizovka je hlavny predikat, ktory hlada krizovku a vypisuje ju. Ako argumenty
+% berie Slovnik, co je list listov, kde kazdy vnutorny list obsahuje Slovo a Napovedu, 
+% dalej berie Tajenku a jej Smer, ktory moze byt 'dole' alebo 'doprava'. Nakoniec berie
+% parametre tvaru krizovky, ktore su reprezentovane Vyskou a Sirkou.
+krizovka(Slovnik, Tajenka, TajenkaSmer, VyskaKrizovky, SirkaKrizovky) :- 
+    najdi_krizovku(Slovnik, Tajenka, TajenkaSmer, VyskaKrizovky, SirkaKrizovky, PouziteSlova),
     vypis_plochu(VyskaKrizovky, SirkaKrizovky),
-    write('\n\n'),
-    vypis_poziciu_tajanky(VyskaKrizovky, SirkaKrizovky, TajankaSmer),
-    write('\n\n'),
-    vypis_napovedy(PolozeneSlova, SirkaKrizovky), !.
+    nl, nl,
+    vypis_poziciu_tajenky(VyskaKrizovky, SirkaKrizovky, TajenkaSmer),
+    nl, nl,
+    vypis_napovedy(PouziteSlova, SirkaKrizovky),
+    !.
 
-najdi_krizovku(Slovnik, Tajanka, TajankaSmer, VyskaKrizovky, SirkaKrizovky, PolozeneSlova, Grid) :-
+
+
+% najdi_krizovku(+Slovnik, +Tajenka, +TajenkaSmer, +VyskaKrizovky, +SirkaKrizovky, -PouziteSlova) :-
+% Predikat, ktory najde krizovku na zaklade predanych parametrov. V prvom rade vytvori plochu krizovky
+% a nasledne do nej ulozi tajenku. Potom sa uz snazi Okienkokladat slova zo slovniku tak, aby vytvoril krizovku.
+najdi_krizovku(Slovnik, Tajenka, TajenkaSmer, VyskaKrizovky, SirkaKrizovky, PouziteSlova) :-
     % Vytvorime si plochu krizovky
     % Okienka krizovky cislujeme od 0 do (VyskaKrizovky * SirkaKrizovky - 1)
-    vytvor_plochu(VyskaKrizovky, SirkaKrizovky, VytvorenaPlocha),
+    vytvor_plochu(VyskaKrizovky, SirkaKrizovky, PlochaSoSlovom),
 
-    % Dostanem cislo Okienka, kde chceme aby zacinala nasa tajanka
-    vrat_okienko_tajanky(VyskaKrizovky, SirkaKrizovky, TajankaSmer, OkienkoTajanky), % OkienkoTajanky je okienko, kde zacina tajanka
+    % Dostaneme cislo Okienka, kde chceme aby zacinala nasa tajenka
+    vrat_okienko_tajenky(VyskaKrizovky, SirkaKrizovky, TajenkaSmer, OkienkoTajenky), % OkienkoTajenky je okienko, kde zacina tajenka
     
-    % Vlozime tajanku do krizovky
-    prirad_tajanku(Tajanka, TajankaSmer, OkienkoTajanky, VyskaKrizovky, SirkaKrizovky, VytvorenaPlocha, PlochaSTajankou),
+    % Vlozime tajenku do krizovky
+    prirad_tajenku(Tajenka, TajenkaSmer, OkienkoTajenky, VyskaKrizovky, SirkaKrizovky, PlochaSoSlovom, PlochaSTajenkou),
 
-    % Vygeneruje pozicie, kde budeme chciet umiestnit nase slova okrem Tajanky
-    % Pozicie su list: [Okienko-Smer, ...] -> napr [1-dole, 2-dole, 1-doprava, 3-doprava]
-    vytvor_pozicie(SirkaKrizovky, VyskaKrizovky, OkienkoTajanky, Pozicie),
+    % Vygeneruje pozicie, kde budeme chciet umiestnit nase slova okrem Tajenky
+    % Pozicie su list: [Okienko-Smer, ...] -> napr [0-dole, 1-dole, 0-doprava, 2-doprava]
+    vytvor_pozicie(VyskaKrizovky, SirkaKrizovky, OkienkoTajenky, Pozicie),
 
     % Prirad slova zo slovnika do krizovky
-    prirad_slova(Slovnik, [], Pozicie, VyskaKrizovky, SirkaKrizovky, PlochaSTajankou, Grid, PolozeneSlova).
+    prirad_slova(Slovnik, [], Pozicie, VyskaKrizovky, SirkaKrizovky, PlochaSTajenkou, PouziteSlova).
 
 
 
 % ----------------------------------------------------------------
-% Predikat prirad_slova, sa pokusi vlozit slova zo slovniku na plochu krizovky
-prirad_slova(_, PolozeneSlova, [], _, _, G, G, PolozeneSlova).
+% PRIRADZOVACIE PREDIKATY
 
-prirad_slova(Slova, PolozeneSlova, [Pozicia|ZvysnePozicie], VyskaKrizovky, SirkaKrizovky, VstupnyGrid, VystupnyGrid, PolozeneSlovaOut) :-
-    member([Slovo, Napoveda], Slova),
+
+% prirad_tajenku(+Tajenka, +TajenkaSmer, +Okienko, +VyskaKrizovky, +SirkaKrizovky, +VstupnaPlocha, -VystupnaPlocha) :-
+% Predikat vlozi tajenku na plochu podla Okienka, kde zacina a vrati plochu ako VystupnaPlocha
+prirad_tajenku(Tajenka, TajenkaSmer, Okienko, VyskaKrizovky, SirkaKrizovky, VstupnaPlocha, VystupnaPlocha) :-
+    % Zmenime si tajenku na list pismen a zistim velkost tajenky
+    atom_chars(Tajenka, PismenaTajenky),
+    length(PismenaTajenky, DlzkaTajenky),
+
+    % Test, ci je tajenka na celu sirku/dlzku krizovky
+    (TajenkaSmer == doprava ->
+        DlzkaTajenky = SirkaKrizovky
+    ; 
+        DlzkaTajenky = VyskaKrizovky  
+    ),
+    % Priradime tajenku na plochu
+    prirad_slovo(PismenaTajenky, DlzkaTajenky, tajenka, Okienko, TajenkaSmer, VyskaKrizovky, SirkaKrizovky, VstupnaPlocha, VystupnaPlocha, _).
+
+
+
+% prirad_slova(+Slova, +PouziteSlova, +Pozicie, +VyskaKrizovky, +SirkaKrizovky, +VstupnyPlocha, -PouziteSlovaOut) :-
+% Predikat prirad_slova, sa pokusi vlozit slova zo slovniku na plochu krizovky
+prirad_slova(_, PouziteSlova, [], _, _, _, PouziteSlova). % Ak uz neexistuje ziadna pozicia, tak je krizovka vyplnena
+
+prirad_slova(Slovnik, PouziteSlova, [Pozicia|ZvysnePozicie], VyskaKrizovky, SirkaKrizovky, Plocha, PouziteSlovaOut) :-
+    % Vyberieme Slovo zo Slovniku
+    member([Slovo, Napoveda], Slovnik),
+    
+    % Rozlozime Slovo na pismena a zistime dlzku slova
     atom_chars(Slovo, ListPismen),
     length(ListPismen, DlzkaSlova),
+
+    % Rozdelime Poziciu na Okienko a Smer
     Pozicia = Okienko-Smer,
-    prirad_slovo(Slovo, ListPismen, DlzkaSlova, Napoveda, Okienko, Smer, VyskaKrizovky, SirkaKrizovky, VstupnyGrid, VytvorenaPlocha, PolozeneSlovo),
+
+    % Pokusime sa priradit Slovo na danu poziciu -> Okienko a Smer
+    prirad_slovo(ListPismen, DlzkaSlova, Napoveda, Okienko, Smer, VyskaKrizovky, SirkaKrizovky, Plocha, PlochaSoSlovom, PouziteSlovo),
     
-    % Ak slovo nedosahuje az na okraj plochy krizovky, tak pridaj medzi pozicie nove 2 pozicie od konca slova
+    % Ak slovo nedosahuje az na okraj plochy krizovky, tak pridaj medzi pozicie novu poziciu do konca plochy
     ( vrat_okienko_za_koncom(DlzkaSlova, Okienko, Smer, VyskaKrizovky, SirkaKrizovky, OkienkoZaKoncom) ->
+        % Pridame novu poziciu do konca riadku/stlpca
         NovaPozicia = OkienkoZaKoncom-Smer,
         ZvysnePoziciePridane = [NovaPozicia|ZvysnePozicie]
     ;
+        % Slovo dosahuje az na koniec -> nepridavame novu poziciu
         ZvysnePoziciePridane = ZvysnePozicie 
     ),
 
-    vymaz([Slovo, Napoveda], Slova, PremazaneSlova),
-    prirad_slova(PremazaneSlova, [PolozeneSlovo|PolozeneSlova], ZvysnePoziciePridane, VyskaKrizovky, SirkaKrizovky, VytvorenaPlocha, VystupnyGrid, PolozeneSlovaOut).
+    % Pouzite slovo vymazeme zo slovniku
+    vymaz([Slovo, Napoveda], Slovnik, PremazanySlovnik),
+    % Rekurzivne priradzujeme dalsie slova
+    prirad_slova(PremazanySlovnik, [PouziteSlovo|PouziteSlova], ZvysnePoziciePridane, VyskaKrizovky, SirkaKrizovky, PlochaSoSlovom, PouziteSlovaOut).
 
-% ----------------------------------------------------------------
+
+
+% prirad_slovo(+Slovo, +ListPismen, +DlzkaSlova, +Napoveda, +OkieknoZaciatku, +Smer, +VyskaKrizovky, +SirkaKrizovky, +VstupnaPlocha, -VystupnaPlocha, -PouziteSlovo) :-
+% Predikat, ktory podla zaciatocneho okienka a smeru priradi Slovo na plochu krizovky
+prirad_slovo(ListPismen, DlzkaSlova, Napoveda, OkienkoZaciatku, Smer, VyskaKrizovky, SirkaKrizovky, VstupnaPlocha, VystupnaPlocha, PouziteSlovo) :-
+    % Ak sa slovo zmesti do riadku/stlpca, tak vrati cisla okienok, v ktorych sa bude nachadzat
+    vrat_cisla_okienok_pre_slovo(DlzkaSlova, OkienkoZaciatku, Smer, Okienka, VyskaKrizovky, SirkaKrizovky),
+
+    % Priradi Slovo pismeno po pismena na plochu
+    prirad_pismena(ListPismen, Smer, DlzkaSlova, Okienka, VstupnaPlocha, VystupnaPlocha),
+
+    Okienka = [ZaciatocneOkienko|_],
+    % Ulozim si atributy k pouzitemu slovu na neskorsie vypisanie napovied
+    PouziteSlovo = [Smer, ZaciatocneOkienko, Napoveda, DlzkaSlova].
 
 
 
-% ----------------------------------------------------------------
-% Predikat zapise pismena na plochu krizovky
+% prirad_pismena(+ListPismen, +Smer, +DlzkaSlova, +Okienka, +VtupnaPlocha, -VystupnaPlocha) :-
+% Predikat zapise pismena slova na plochu krizovky do okienok v Okienka.
+% V pripade, ze su vsetky pismena zapisane, tak prekopirujeme plochu na vystup
 prirad_pismena([], _, _, [], G, G).
 
-prirad_pismena([Pismeno|ZvysokPismen], Smer, Dlzka, [Okienko|ZvysokOkienok], VstupnyGrid, VystupnyGrid):-
-    get_assoc(Okienko, VstupnyGrid, X),
+prirad_pismena([Pismeno|ZvysokPismen], Smer, Dlzka, [Okienko|ZvysokOkienok], VstupnaPlocha, VystupnaPlocha):-
+    % Zistime si hodnotu v okienku na ploche, ktora bude v X
+    get_assoc(Okienko, VstupnaPlocha, X),
     (
-    % AK tam je rovnake pismeno, tak parada
+    % Ak sa v okienku nachadza rovnake pismeno, tak sa nam slova mozu prekryvat a mozeme dalej pokracovat
     X == Pismeno,
-    VytvorenaPlocha = VstupnyGrid
+    PlochaSoSlovom = VstupnaPlocha
     ;
-    % Ak tam je prazdne, tak to tam pridam
+    % Ak je okienko prazdne, tak do neho priradime pismeno naseho slova
     X == prazdne,
-    put_assoc(Okienko, VstupnyGrid, Pismeno, VytvorenaPlocha)
+    put_assoc(Okienko, VstupnaPlocha, Pismeno, PlochaSoSlovom)
     ), !, 
-    prirad_pismena(ZvysokPismen, Smer, Dlzka, ZvysokOkienok, VytvorenaPlocha, VystupnyGrid).
+    % Rekurzivne pokracujeme v priradzovani pismen na plochu
+    prirad_pismena(ZvysokPismen, Smer, Dlzka, ZvysokOkienok, PlochaSoSlovom, VystupnaPlocha).
 % ----------------------------------------------------------------
 
 
 
 % ----------------------------------------------------------------
-% Predikat, ktory podla Zaciatocneho okienka a Smeru priradi Slovo na plochu krizovky
-prirad_slovo(Slovo, ListPismen, DlzkaSlova, Napoveda, OkienkoZaciatku, Smer, VyskaKrizovky, SirkaKrizovky, VstupnyGrid, VystupnyGrid, PolozeneSlovo) :-
-    vrat_cisla_okienok_pre_slovo(DlzkaSlova, OkienkoZaciatku, Smer, Okienka, VyskaKrizovky, SirkaKrizovky),
-    prirad_pismena(ListPismen, Smer, DlzkaSlova, Okienka, VstupnyGrid, VystupnyGrid),
-    Okienka = [ZaciatocneOkienko|_],
-    PolozeneSlovo = [Smer, ZaciatocneOkienko, Napoveda, DlzkaSlova].
-% ----------------------------------------------------------------
+% PREDIKATY NA GENEROVANIE POZICII NA PLOCHE
+
+
+% vytvor_pozicie(+VyskaKrizovky, +SirkaKrizovky, +OkienkoTajenky, -Pozicie) :- 
+% Predikat vytvori list pozicii, kde mozeme umiestnit slovo. List obsahuje 
+% dvojice ZaciatocneOkieko-Smer. Zaciname umiestnovat od prveho riadka a prveho stlpca
+vytvor_pozicie(VyskaKrizovky, SirkaKrizovky, OkienkoTajenky, Pozicie) :-
+    vygeneruj_prvy_riadok(SirkaKrizovky, SirkaKrizovky, VyskaKrizovky, OkienkoTajenky, PrvyRiadok),
+    vygeneruj_prvy_stlpec(VyskaKrizovky, SirkaKrizovky, VyskaKrizovky, OkienkoTajenky, PrvyStlpec),
+    append(PrvyRiadok, PrvyStlpec, Pozicie), 
+    !.
 
 
 
-% ----------------------------------------------------------------
-% Predikat vygeneruje pozicie na ploche
-% Base case for generating the first row, with skipping logic
-generate_first_row(0, _, _, _, []) :- !.
-generate_first_row(N, GridWidth, GridHeight, SkipPos, [Pos-dole|Rest]) :-
+% vygeneruj_prvy_riadok(+N, +SirkaKrizovky, +VyskaKrizovky, +OkienkoTajenky, -PrvyRiadok) :-
+% Predikat vygeneruje prvy riadok pozici na ploche.
+vygeneruj_prvy_riadok(0, _, _, _, []) :- !.
+
+vygeneruj_prvy_riadok(N, SirkaKrizovky, VyskaKrizovky, OkienkoTajenky, [Okienko-dole|Zvysok]) :-
     N > 0,
-    Pos is GridWidth - N,
-    Pos \= SkipPos,  % Skip the position if it matches SkipPos
+    Okienko is SirkaKrizovky - N,
+    
+    % Skontrolujeme, ci okienko nie je zaciatocne okienko tajenky
+    Okienko \= OkienkoTajenky, 
     N1 is N - 1,
-    generate_first_row(N1, GridWidth, GridHeight, SkipPos, Rest).
-generate_first_row(N, GridWidth, GridHeight, SkipPos, Rest) :-
-    N > 0,
-    Pos is GridWidth - N,
-    Pos = SkipPos,  % If the position matches SkipPos, skip it
-    N1 is N - 1,
-    generate_first_row(N1, GridWidth, GridHeight, SkipPos, Rest).
+    vygeneruj_prvy_riadok(N1, SirkaKrizovky, VyskaKrizovky, OkienkoTajenky, Zvysok).
 
-% Base case for generating the first column, with skipping logic
-generate_first_column(_, _, 0, _, []) :- !.
-generate_first_column(GridWidth, GridHeight, N, SkipPos, [Pos-doprava|Rest]) :-
+vygeneruj_prvy_riadok(N, SirkaKrizovky, VyskaKrizovky, OkienkoTajenky, Zvysok) :-
     N > 0,
-    Pos is (N - 1) * GridWidth,
-    Pos \= SkipPos,  % Skip the position if it matches SkipPos
+    Okienko is SirkaKrizovky - N,
+
+    % Ak je okienko zaciatocne okienko tajenky, tak ho vynechame
+    Okienko = OkienkoTajenky,
     N1 is N - 1,
-    generate_first_column(GridWidth, GridHeight, N1, SkipPos, Rest).
-generate_first_column(GridWidth, GridHeight, N, SkipPos, Rest) :-
+    vygeneruj_prvy_riadok(N1, SirkaKrizovky, VyskaKrizovky, OkienkoTajenky, Zvysok).
+
+
+
+% vygeneruj_prvy_stlpec(+N, +SirkaKrizovky, +VyskaKrizovky, +OkienkoTajenky, -PrvyRiadok) :-
+% Predikat vygeneruje prvy riadok pozici na ploche.
+vygeneruj_prvy_stlpec(0, _, _, _, []) :- !.
+
+vygeneruj_prvy_stlpec(N, SirkaKrizovky, VyskaKrizovky, OkienkoTajenky, [Okienko-doprava|Zvysok]) :-
     N > 0,
-    Pos is (N - 1) * GridWidth,
-    Pos = SkipPos,  % If the position matches SkipPos, skip it
+    Okienko is (N - 1) * SirkaKrizovky,
+
+    % Skontrolujeme, ci okienko nie je zaciatocne okienko tajenky
+    Okienko \= OkienkoTajenky,
     N1 is N - 1,
-    generate_first_column(GridWidth, GridHeight, N1, SkipPos, Rest).
+    vygeneruj_prvy_stlpec(N1, SirkaKrizovky, VyskaKrizovky, OkienkoTajenky, Zvysok).
 
-vytvor_pozicie(GridWidth, GridHeight, SkipPos, Result) :-
-    generate_first_row(GridWidth, GridWidth, GridHeight, SkipPos, FirstRow),
-    generate_first_column(GridWidth, GridHeight, GridHeight, SkipPos, FirstColumn),
-    append(FirstRow, FirstColumn, Result), !.
+vygeneruj_prvy_stlpec(N, SirkaKrizovky, VyskaKrizovky, OkienkoTajenky, Zvysok) :-
+    N > 0,
+    Okienko is (N - 1) * SirkaKrizovky,
 
+    % Ak je okienko zaciatocne okienko tajenky, tak ho vynechame
+    Okienko = OkienkoTajenky,
+    N1 is N - 1,
+    vygeneruj_prvy_stlpec(N1, SirkaKrizovky, VyskaKrizovky, OkienkoTajenky, Zvysok).
 % ----------------------------------------------------------------
 
 
 
 % ----------------------------------------------------------------
-% Predikaty, ktore vratia okienko, kde ma zacinat tajanka
+% UTILS PREDIKATY VRACAJUCE INFORMACIE
 
-% vrat_okienko_tajanky(+_VyskaKrizovky, +SirkaKrizovky, +Smer, -Okienko) :-
-% Vrati okienko zaciatku tajanky na ploche cislovanej od 0 z laveho horneho rohu
-vrat_okienko_tajanky(_VyskaKrizovky, SirkaKrizovky, dole, Okienko) :-
+% vrat_okienko_tajenky(+VyskaKrizovky, +SirkaKrizovky, +Smer, -Okienko) :-
+% Vrati okienko zaciatku tajenky na ploche cislovanej od 0 z laveho horneho rohu
+vrat_okienko_tajenky(_VyskaKrizovky, SirkaKrizovky, dole, Okienko) :-
     Okienko is div(SirkaKrizovky, 2),
     !.
 
-vrat_okienko_tajanky(VyskaKrizovky, SirkaKrizovky, doprava, Okienko) :-
-    Riadok is div(VyskaKrizovky, 2), 
-    Okienko is Riadok * SirkaKrizovky,
+vrat_okienko_tajenky(VyskaKrizovky, SirkaKrizovky, doprava, Okienko) :-
+    PrvyRiadok is div(VyskaKrizovky, 2), 
+    Okienko is PrvyRiadok * SirkaKrizovky,
     !.
-% ----------------------------------------------------------------
 
 
-
-% ----------------------------------------------------------------
-% prirad_tajanku(+Tajanka, +TajankaSmer, +Okienko, +VyskaKrizovky, +SirkaKrizovky, +VstupnaPlocha, -VystupnaPlocha) :-
-% Predikat vlozi tajanku na plochu podla Okienka, kde zacina a vrati plochu ako VystupnaPlocha
-prirad_tajanku(Tajanka, TajankaSmer, Okienko, VyskaKrizovky, SirkaKrizovky, VstupnaPlocha, VystupnaPlocha) :-
-    atom_chars(Tajanka, PismenaTajanky), % Zmenim si Tajanku na list pismen
-    length(PismenaTajanky, DlzkaTajanky), % Zistim velkost tajanky
-    % Test, ci je tajanka na celu sirku/dlzku krizovky
-    (TajankaSmer == doprava ->
-        DlzkaTajanky = SirkaKrizovky
-    ; 
-        DlzkaTajanky = VyskaKrizovky  
-    ),
-    prirad_slovo(Tajanka, PismenaTajanky, DlzkaTajanky, tajanka, Okienko, TajankaSmer, VyskaKrizovky, SirkaKrizovky, VstupnaPlocha, VystupnaPlocha, PriradeneSlovo).
-% ----------------------------------------------------------------
 
 % vrat_stlpec_podla_okienka(+Okienko, +SirkaKrizovky, -Stlpec) :-
 % Predikat vrati cislo stlpca, kde sa nachadza Okienko
@@ -163,27 +218,30 @@ vrat_stlpec_podla_okienka(Okienko, SirkaKrizovky, Stlpec) :-
     Stlpec is Okienko mod SirkaKrizovky.
 
 
-% vrat_riadok_podla_okienka(+Okienko, +SirkaKrizovky, -Riadok) :-
+% vrat_riadok_podla_okienka(+Okienko, +SirkaKrizovky, -PrvyRiadok) :-
 % Predikat vrati cislo riadku, kde sa nachadza Okienko
 vrat_riadok_podla_okienka(Okienko, SirkaKrizovky, Riadok) :-
     Riadok is Okienko // SirkaKrizovky.
 
 
 
-% ----------------------------------------------------------------
 % vrat_cisla_okienok_pre_slovo(+DlzkaSlova, +Okienko, +Smer, -Okienka, +VyskaKrizovky, +SirkaKrizovky) :- 
 % Predikat vrati cisla okienok, kde sa bude slovo nachadzat podla zaciatocneho okienka
 % Predikat najprv skontroluje, ci sa dane slovo zmensti na plochu a ak nie, tak vrati false
 vrat_cisla_okienok_pre_slovo(DlzkaSlova,  Okienko, doprava, Okienka, VyskaKrizovky, SirkaKrizovky) :-
     vrat_stlpec_podla_okienka(Okienko, SirkaKrizovky, StlpecZaciatku),
     KoniecSlova is StlpecZaciatku + DlzkaSlova,
+    
+    % Skontrolujeme, ci sa slovo zmesti do riadku 
     KoniecSlova =< SirkaKrizovky,
     vrat_cisla_okienok_pre_slovo_skontrolovana_dlzka(DlzkaSlova, Okienko, doprava, Okienka, VyskaKrizovky, SirkaKrizovky),
     !.
 
 vrat_cisla_okienok_pre_slovo(DlzkaSlova,  Okienko, dole, Okienka, VyskaKrizovky, SirkaKrizovky) :-
-    vrat_riadok_podla_okienka(Okienko, SirkaKrizovky, RiadokZaciatku),
-    KoniecSlova is RiadokZaciatku + DlzkaSlova,
+    vrat_riadok_podla_okienka(Okienko, SirkaKrizovky, PrvyRiadokZaciatku),
+    KoniecSlova is PrvyRiadokZaciatku + DlzkaSlova,
+
+    % Skontrolujeme, ci sa slovo zmenti do stlpca
     KoniecSlova =< VyskaKrizovky,
     vrat_cisla_okienok_pre_slovo_skontrolovana_dlzka(DlzkaSlova, Okienko, dole, Okienka, VyskaKrizovky, SirkaKrizovky),
     !.
@@ -202,17 +260,16 @@ vrat_cisla_okienok_pre_slovo_skontrolovana_dlzka(DlzkaSlova, Okienko, dole, [Oki
     NovaDlzka is DlzkaSlova - 1,
     NoveOkianko is Okienko + SirkaKrizovky,
     vrat_cisla_okienok_pre_slovo_skontrolovana_dlzka(NovaDlzka, NoveOkianko, dole, Zvysok, VyskaKrizovky, SirkaKrizovky).
-% ----------------------------------------------------------------
 
 
 
-% ----------------------------------------------------------------
 % vrat_okienko_za_koncom(+DlzkaSlovam +Okienko, +Smer, +VyskaKrizovky, +SirkaKrizovky, -OkienkoZaKoncom) :-
-% Predikat vrati okienko za koncom slova zacinajucom v okienku Okienko s dlzkou DlzkaSlova
-% Ak je toto okienko mimo plochy, tak vrati false
+% Predikat vrati okienko za koncom slova zacinajucom v okienku Okienko s dlzkou DlzkaSlova,
+% Ak je toto okienko mimo plochy, tak vrati false.
 vrat_okienko_za_koncom(DlzkaSlova, Okienko, dole, VyskaKrizovky, SirkaKrizovky, OkienkoZaKoncom) :- 
-    vrat_riadok_podla_okienka(Okienko, SirkaKrizovky, Riadok),
-    KoniecSlova is Riadok + DlzkaSlova,
+    vrat_riadok_podla_okienka(Okienko, SirkaKrizovky, PrvyRiadok),
+    KoniecSlova is PrvyRiadok + DlzkaSlova,
+
     ( KoniecSlova < VyskaKrizovky ->
         TrebaPridat is DlzkaSlova * SirkaKrizovky,
         OkienkoZaKoncom is TrebaPridat + Okienko    
@@ -228,11 +285,23 @@ vrat_okienko_za_koncom(DlzkaSlova, Okienko, doprava, _VyskaKrizovky, SirkaKrizov
     ;
         false
     ).
+
+
+
+% vymaz(X,L,R) :- R je L s vymazanym prvym X
+vymaz(Y,[X|Xs],[X|Tail]) :-
+	Y \== X,
+	vymaz(Y,Xs,Tail).
+vymaz(X,[X|Xs],Xs) :- !.
+vymaz(_,[],[]).
 % ----------------------------------------------------------------
 
 
 
 % ----------------------------------------------------------------
+% GENEROVANIE PLOCHY KRIZOVKY
+
+
 % prazdne_okienko(+Okienko, -Okienko-prazdne) :- 
 % Predikat vytovri dvojicu z okienka tak, ze ku nemu prida, ze je prazdne
 prazdne_okienko(Okienko, Okienko-prazdne).
@@ -251,53 +320,70 @@ vytvor_plochu(VyskaKrizovky, SirkaKrizovky, Plocha) :-
 
 
 % ----------------------------------------------------------------
-% vymaz(X,L,R) :- R je L s vymazanym prvym X
-vymaz(Y,[X|Xs],[X|Tail]) :-
-	Y \== X,
-	vymaz(Y,Xs,Tail).
-vymaz(X,[X|Xs],Xs) :- !.
-vymaz(_,[],[]).
-% ----------------------------------------------------------------
+% PREDIKATY VYPISOVANIA
 
-
-
-% ----------------------------------------------------------------
-% Predikát na vypisovanie krížovky
+% vypis_plochu(+VyskaKrizovky, +SirkaKirzovky) :-
+% Predikat, ktory podla vysky a sirky vypise krizovku tvorenu z '*'.
+% Riadky krizovky su ocislovane a stlpce su oznacene velkymi pismenami A, B, C...
 vypis_plochu(VyskaKrizovky, SirkaKrizovky) :-
     nl,
     vypis_hlavicku(SirkaKrizovky),
     vypis_riadky(1, VyskaKrizovky, SirkaKrizovky).
 
-% Pomocný predikát na vypísanie hlavičky riadku
+
+
+% vypis_hlavicku(+SirkaKrizovky) :-
+% Pomocny predikat na vypisanie hlavicky krizovky.
 vypis_hlavicku(SirkaKrizovky) :-
-    write('  '), % Začneme medzerami pre zarovnanie stĺpcových čísel
+    % Zacneme medzerami pre zarovananie stlpcov
+    write('  '),
     vypis_pismena(1, SirkaKrizovky),
     nl.
 
-% Pomocný predikát na vypísanie písmen (A, B, C, ...)
-vypis_pismena(Start, End) :-
-    Start =< End,
-    PismenoCode is Start + 64, % Získame ASCII kód písmena (A má ASCII kód 65)
-    char_code(Pismeno, PismenoCode), % Získame znak z ASCII kódu
-    write(Pismeno), write(' '),
-    Next is Start + 1,
-    vypis_pismena(Next, End).
-vypis_pismena(Start, End) :-
-    Start > End. % Koncová podmienka
 
-% Pomocný predikát na vypísanie všetkých riadkov
-vypis_riadky(CurrentRow, VyskaKrizovky, SirkaKrizovky) :-
-    CurrentRow =< VyskaKrizovky,
-    write(CurrentRow), write(' '), % Vypíše číslo riadku
+
+% vypis_pismena(+Zaciatok, +Koniec) :-
+% Pomocny predikat na vypisanie pismen A, B, C, ...
+vypis_pismena(Zaciatok, Koniec) :-
+    Zaciatok =< Koniec,
+
+    % Ziskame ASCII kod pismena (A ma ASCII kod 65)
+    PismenoKod is Zaciatok + 64,
+    % Ziskame znak z ASCII kodu
+    char_code(Pismeno, PismenoKod),
+
+    write(Pismeno), write(' '),
+    Next is Zaciatok + 1,
+    vypis_pismena(Next, Koniec).
+
+% Koncova podmienka
+vypis_pismena(Zaciatok, Koniec) :-
+    Zaciatok > Koniec. 
+
+
+
+% vypis_riadky(+AktualnyRiadok, +VyskaKrizovky, +SirkaKrizovky) :-
+% Pomocny predikat na vypisanie vsetkych riadkov
+vypis_riadky(AktualnyRiadok, VyskaKrizovky, SirkaKrizovky) :-
+    AktualnyRiadok =< VyskaKrizovky,
+    % Vypiseme cislo riadku a '*'
+    write(AktualnyRiadok), write(' '),
     vypis_hviezdicky(SirkaKrizovky),
     nl,
-    NextRow is CurrentRow + 1,
-    vypis_riadky(NextRow, VyskaKrizovky, SirkaKrizovky).
-vypis_riadky(CurrentRow, VyskaKrizovky, _) :-
-    CurrentRow > VyskaKrizovky. % Koncová podmienka
+    DalsiRiadok is AktualnyRiadok + 1,
+    % Rekurzivne vypiseme dalsie riadky
+    vypis_riadky(DalsiRiadok, VyskaKrizovky, SirkaKrizovky).
 
-% Pomocný predikát na vypísanie hviezdičiek pre riadok
-vypis_hviezdicky(0) :- !. % Koncová podmienka
+% Koncova podmienka
+vypis_riadky(AktualnyRiadok, VyskaKrizovky, _) :-
+    AktualnyRiadok > VyskaKrizovky.
+
+
+% vypis_hviezdicky(+N) :-
+% Pomocny predikat na vypisanie hviezdiciek ako prazdnej krizovky.
+% Koncová podmienka
+vypis_hviezdicky(0) :- !. 
+
 vypis_hviezdicky(N) :-
     N > 0,
     write('* '),
@@ -305,44 +391,52 @@ vypis_hviezdicky(N) :-
     vypis_hviezdicky(N1).
 
 
-% ----------------------------------------------------------------
 
-
-
-% ----------------------------------------------------------------
-% Predikat na vypisanie pozicie tajanky
-vypis_poziciu_tajanky(VyskaKrizovky, SirkaKrizovky, Smer) :- 
-    vrat_okienko_tajanky(VyskaKrizovky, SirkaKrizovky, Smer, OkienkoTajanky),
+% vypis_poziciu_tajenky(+VyskaKrizovky, +SirkaKrizovky, +Smer) :-
+% Predikat na vypisanie pozicie tajenky. Vypise bud cislo riadku v ktorom sa nachadza,
+% alebo pismeno stlpca, v ktorom sa nachadza
+vypis_poziciu_tajenky(VyskaKrizovky, SirkaKrizovky, Smer) :- 
+    vrat_okienko_tajenky(VyskaKrizovky, SirkaKrizovky, Smer, OkienkoTajenky),
     ( Smer = doprava ->
-        NewPrveOkienkoZeroBased is OkienkoTajanky // SirkaKrizovky,  % Divide OkienkoTajanky by SirkaKrizovky if Smer is 'doprava'
+        NewPrveOkienkoZeroBased is OkienkoTajenky // SirkaKrizovky,
+        % Riadky vo vypise cislujeme od 1
         NewPrveOkienko is NewPrveOkienkoZeroBased + 1,
-        write('Tajanka sa nachadza v riadku cislo '),
+        write('Tajenka sa nachádza v riadku číslo '),
         write(NewPrveOkienko)
     ; 
-        % Pri smere 'dole' potrebujeme získať písmeno pre stĺpec
-        PismenoIndex is OkienkoTajanky mod SirkaKrizovky, % Získame index stĺpca (0-based)
-        PismenoCode is PismenoIndex + 65, % Mápovanie na ASCII kód pre písmená (A = 65)
-        char_code(PismenoTajanky, PismenoCode), % Získame písmeno z ASCII kódu
-        write('Tajanka sa nachadza v stlpci '),
-        write(PismenoTajanky)
+        % Pri smere 'dole' potrebujeme ziskat pismeno pre stlpec
+        vrat_stlpec_podla_okienka(OkienkoTajenky, SirkaKrizovky, Stlpec),
+
+        % Mapovanie na ASCII kód pre písmená (A = 65)
+        PismenoKod is Stlpec + 65, 
+        % Získame písmeno z ASCII kódu
+        char_code(PismenoTajenky, PismenoKod),
+
+        write('Tajenka sa náchadza v stĺpci '),
+        write(PismenoTajenky)
     ).
-% ----------------------------------------------------------------
 
 
 
-% ----------------------------------------------------------------
-% Predikat na vypis napovied
+% napoveda_je_doprava(+Napoveda) :-
+% Predikat, ktory vrati true, ake je napoveda doprava a nie dole.
 napoveda_je_doprava([doprava, _, _, _]).
 
+
+
+% vypis_napovedy(+ListNapovied, +SirkaKrizovky) :-
+% Predikat, ktory vypise napovedy. Najprv vypise napovedy v smere 'doprava' a
+% potom napovedy v smere 'dole'. 
 vypis_napovedy(ListNapovied, SirkaKrizovky) :- 
+    % Rozdelime napovedy na doprava a dole
     partition(napoveda_je_doprava, ListNapovied, DopravaNapovedy, ReversedDoleNapovedy),
-    write('Napovedy doprava:'),
+    write('Nápovedy v smere doprava:'),
     nl,
     write('--------------------'),
     nl,
     vypis_jednu_napovedu(DopravaNapovedy, SirkaKrizovky),
     nl,
-    write('Napovedy dole:'),
+    write('Nápovedy v smere dole:'),
     nl,
     write('--------------------'),
     nl,
@@ -350,21 +444,27 @@ vypis_napovedy(ListNapovied, SirkaKrizovky) :-
     vypis_jednu_napovedu(DoleNapovedy, SirkaKrizovky),
     nl.
 
-
+% vypis_jednu_napovedu(+ListNapovied, +SirkaKrizovky) :-
+% Predikat vypise jednu napovedu. Napoveda sa sklada z cisla riadku a pismena stlpca,
+% kde zacina. Nasledne je napisana dlzka slova, ktore treba doplnit a nakoniec je 
+% napisana napoveda.
 vypis_jednu_napovedu([], _).
+
 vypis_jednu_napovedu([[_, Okienko, Napoveda, DlzkaSlova]|ZvysokNapovied], SirkaKrizovky) :-
-    vrat_riadok_podla_okienka(Okienko, SirkaKrizovky, RiadokMinusJedna),
+    vrat_riadok_podla_okienka(Okienko, SirkaKrizovky, PrvyRiadokMinusJedna),
     vrat_stlpec_podla_okienka(Okienko, SirkaKrizovky, Stlpec),
-    Riadok is RiadokMinusJedna + 1,
-    PismenoCode is Stlpec + 65, % Mápovanie na ASCII kód pre písmená (A = 65)
-    char_code(StlpecPismeno, PismenoCode),
-    write('Napoveda '),
-    write(Riadok),
+    PrvyRiadok is PrvyRiadokMinusJedna + 1,
+    % Mapovanie na ASCII kod pre pismena (A = 65)
+    PismenoKod is Stlpec + 65, 
+    char_code(StlpecPismeno, PismenoKod),
+    write('Nápoveda '),
+    write(PrvyRiadok),
     write(StlpecPismeno),
-    write(' dlzky '),
+    write(', dĺžka slova je '),
     write(DlzkaSlova),
     write(': '),
     write(Napoveda),
     nl,
+    % Rekurzivne vypisema dalsie napovedy
     vypis_jednu_napovedu(ZvysokNapovied, SirkaKrizovky).
 % ----------------------------------------------------------------
