@@ -5,7 +5,7 @@ krizovka(Slovnik, Tajanka, TajankaSmer, VyskaKrizovky, SirkaKrizovky) :-
     write('\n\n'),
     vypis_poziciu_tajanky(VyskaKrizovky, SirkaKrizovky, TajankaSmer),
     write('\n\n'),
-    vypis_napovedy(PolozeneSlova), !.
+    vypis_napovedy(PolozeneSlova, SirkaKrizovky), !.
 
 najdi_krizovku(Slovnik, Tajanka, TajankaSmer, VyskaKrizovky, SirkaKrizovky, PolozeneSlova, Grid) :-
     % Vytvorime si plochu krizovky
@@ -79,7 +79,7 @@ prirad_slovo(Slovo, ListPismen, DlzkaSlova, Napoveda, OkienkoZaciatku, Smer, Vys
     vrat_cisla_okienok_pre_slovo(DlzkaSlova, OkienkoZaciatku, Smer, Okienka, VyskaKrizovky, SirkaKrizovky),
     prirad_pismena(ListPismen, Smer, DlzkaSlova, Okienka, VstupnyGrid, VystupnyGrid),
     Okienka = [ZaciatocneOkienko|_],
-    PolozeneSlovo = [Smer, ZaciatocneOkienko, Napoveda].
+    PolozeneSlovo = [Smer, ZaciatocneOkienko, Napoveda, DlzkaSlova].
 % ----------------------------------------------------------------
 
 
@@ -262,44 +262,48 @@ vymaz(_,[],[]).
 
 
 % ----------------------------------------------------------------
-% Predikat na vypisovanie Krizovky
+% Predikát na vypisovanie krížovky
 vypis_plochu(VyskaKrizovky, SirkaKrizovky) :-
+    nl,
     vypis_hlavicku(SirkaKrizovky),
     vypis_riadky(1, VyskaKrizovky, SirkaKrizovky).
 
-% Helper predicate to print the header row
+% Pomocný predikát na vypísanie hlavičky riadku
 vypis_hlavicku(SirkaKrizovky) :-
-    write('  '), % Start with spaces to align column numbers
-    vypis_cisla(1, SirkaKrizovky),
+    write('  '), % Začneme medzerami pre zarovnanie stĺpcových čísel
+    vypis_pismena(1, SirkaKrizovky),
     nl.
 
-% Helper predicate to print column numbers
-vypis_cisla(Start, End) :-
+% Pomocný predikát na vypísanie písmen (A, B, C, ...)
+vypis_pismena(Start, End) :-
     Start =< End,
-    write(Start), write(' '),
+    PismenoCode is Start + 64, % Získame ASCII kód písmena (A má ASCII kód 65)
+    char_code(Pismeno, PismenoCode), % Získame znak z ASCII kódu
+    write(Pismeno), write(' '),
     Next is Start + 1,
-    vypis_cisla(Next, End).
-vypis_cisla(Start, End) :-
-    Start > End. % Base case
+    vypis_pismena(Next, End).
+vypis_pismena(Start, End) :-
+    Start > End. % Koncová podmienka
 
-% Helper predicate to print all rows
+% Pomocný predikát na vypísanie všetkých riadkov
 vypis_riadky(CurrentRow, VyskaKrizovky, SirkaKrizovky) :-
     CurrentRow =< VyskaKrizovky,
-    write(CurrentRow), write(' '), % Print row number
+    write(CurrentRow), write(' '), % Vypíše číslo riadku
     vypis_hviezdicky(SirkaKrizovky),
     nl,
     NextRow is CurrentRow + 1,
     vypis_riadky(NextRow, VyskaKrizovky, SirkaKrizovky).
 vypis_riadky(CurrentRow, VyskaKrizovky, _) :-
-    CurrentRow > VyskaKrizovky. % Base case
+    CurrentRow > VyskaKrizovky. % Koncová podmienka
 
-% Helper predicate to print stars for a row
-vypis_hviezdicky(0) :- !. % Base case
+% Pomocný predikát na vypísanie hviezdičiek pre riadok
+vypis_hviezdicky(0) :- !. % Koncová podmienka
 vypis_hviezdicky(N) :-
     N > 0,
     write('* '),
     N1 is N - 1,
     vypis_hviezdicky(N1).
+
 
 % ----------------------------------------------------------------
 
@@ -310,13 +314,17 @@ vypis_hviezdicky(N) :-
 vypis_poziciu_tajanky(VyskaKrizovky, SirkaKrizovky, Smer) :- 
     vrat_okienko_tajanky(VyskaKrizovky, SirkaKrizovky, Smer, OkienkoTajanky),
     ( Smer = doprava ->
-        NewPrveOkienkoZeroBased is OkienkoTajanky // SirkaKrizovky,  % Divide PrveOkienko by SirkaKrizovky if Smer is 'dole'
+        NewPrveOkienkoZeroBased is OkienkoTajanky // SirkaKrizovky,  % Divide OkienkoTajanky by SirkaKrizovky if Smer is 'doprava'
         NewPrveOkienko is NewPrveOkienkoZeroBased + 1,
         write('Tajanka sa nachadza v riadku cislo '),
         write(NewPrveOkienko)
     ; 
-        write('Tajanka sa nachadza v stlpci cislo '),
-        write(OkienkoTajanky)
+        % Pri smere 'dole' potrebujeme získať písmeno pre stĺpec
+        PismenoIndex is OkienkoTajanky mod SirkaKrizovky, % Získame index stĺpca (0-based)
+        PismenoCode is PismenoIndex + 65, % Mápovanie na ASCII kód pre písmená (A = 65)
+        char_code(PismenoTajanky, PismenoCode), % Získame písmeno z ASCII kódu
+        write('Tajanka sa nachadza v stlpci '),
+        write(PismenoTajanky)
     ).
 % ----------------------------------------------------------------
 
@@ -324,24 +332,39 @@ vypis_poziciu_tajanky(VyskaKrizovky, SirkaKrizovky, Smer) :-
 
 % ----------------------------------------------------------------
 % Predikat na vypis napovied
-napoveda_je_doprava([doprava, _, _]).
+napoveda_je_doprava([doprava, _, _, _]).
 
-vypis_napovedy(ListNapovied) :- 
+vypis_napovedy(ListNapovied, SirkaKrizovky) :- 
     partition(napoveda_je_doprava, ListNapovied, DopravaNapovedy, ReversedDoleNapovedy),
-    write('Napovedy doprava: \n'),
-    vypis_jednu_napovedu(DopravaNapovedy),
+    write('Napovedy doprava:'),
     nl,
-    write('Napovedy dole: \n'),
+    write('--------------------'),
+    nl,
+    vypis_jednu_napovedu(DopravaNapovedy, SirkaKrizovky),
+    nl,
+    write('Napovedy dole:'),
+    nl,
+    write('--------------------'),
+    nl,
     reverse(ReversedDoleNapovedy, DoleNapovedy),
-    vypis_jednu_napovedu(DoleNapovedy),
+    vypis_jednu_napovedu(DoleNapovedy, SirkaKrizovky),
     nl.
 
 
-vypis_jednu_napovedu([]).
-vypis_jednu_napovedu([[_, Cislo, Napoveda]|ZvysokNapovied]) :-
-    write(Cislo),
-    write('. '),
+vypis_jednu_napovedu([], _).
+vypis_jednu_napovedu([[_, Okienko, Napoveda, DlzkaSlova]|ZvysokNapovied], SirkaKrizovky) :-
+    vrat_riadok_podla_okienka(Okienko, SirkaKrizovky, RiadokMinusJedna),
+    vrat_stlpec_podla_okienka(Okienko, SirkaKrizovky, Stlpec),
+    Riadok is RiadokMinusJedna + 1,
+    PismenoCode is Stlpec + 65, % Mápovanie na ASCII kód pre písmená (A = 65)
+    char_code(StlpecPismeno, PismenoCode),
+    write('Napoveda '),
+    write(Riadok),
+    write(StlpecPismeno),
+    write(' dlzky '),
+    write(DlzkaSlova),
+    write(': '),
     write(Napoveda),
     nl,
-    vypis_jednu_napovedu(ZvysokNapovied).
+    vypis_jednu_napovedu(ZvysokNapovied, SirkaKrizovky).
 % ----------------------------------------------------------------
