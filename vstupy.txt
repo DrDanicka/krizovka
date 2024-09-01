@@ -1,5 +1,61 @@
-najdi_krizovku([[xy,xy], [zw, zw], [xak, xak], [klm, klm], [n, n], [yb, yb], [l,l], [z,z], [cm, cm], [wdn,wdn]], abcd, doprava, 3, 4, X, Y).
+Slová v nasledujúcich vstupoch sú vymyslené. Je tak spravené pre názornosť.
+Rovnako aj nápovedy sú iba skopírované slová z krížovky.
 
+---------------------------------------------------
+1. Vstup, kde je tajenka 'abcd' v smere doprava:
 krizovka([[xy,xy], [zw, zw], [xak, xak], [klm, klm], [n, n], [yb, yb], [l,l], [z,z], [cm, cm], [wdn,wdn]], abcd, doprava, 3, 4).
 
+Vizualizácia 1. krížovky:
+
+  A B C D 
+1 x y z w 
+2 a b c d 
+3 k l m n
+
+---------------------------------------------------
+2. Vstup, kde je tajenka 'zcm' v smere dole:
 krizovka([[xy,xy], [zw, zw], [xak, xak], [klm, klm], [n, n], [yb, yb], [l,l], [abcd, abcd], [wdn,wdn]], zcm, dole, 3, 4).
+
+Vizualizácia 2. krížovky:
+
+  A B C D 
+1 x y z w 
+2 a b c d 
+3 k l m n
+
+---------------------------------------------------
+3. Vstup, kde je tajenka 'baba' v smere doprava:
+slovnik(X), krizovka(X, baba, doprava, 4, 4).
+
+Vizualizácia 3. krížovky:
+
+  A B C D 
+1 b i d i 
+2 i d e h 
+3 b a b a 
+4 b e e f
+
+---------------------------------------------------
+4. Vstup, kde je tajenka 'facia' v smere doprava:
+slovnik(X), krizovka(X, facia, doprava, 3, 5).
+
+Vizualizácia 3. krížovky:
+
+  A B C D E 
+1 a d a g e 
+2 f a c i a 
+3 g h i e d 
+
+---------------------------------------------------
+5. Vstup, kde je tajenka 'czechx' v smere dole:
+slovnikVstup5(X), krizovka(X, czechx, dole, 6, 5).
+
+Vizualizácia 5. krížovky:
+
+  A B C D E 
+1 a b c d e 
+2 x y z o v 
+3 b l e n o 
+4 x i c e l 
+5 c n h a v 
+6 x a x a e
