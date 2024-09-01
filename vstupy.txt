@@ -1,0 +1,5 @@
+najdi_krizovku([[xy,xy], [zw, zw], [xak, xak], [klm, klm], [n, n], [yb, yb], [l,l], [z,z], [cm, cm], [wdn,wdn]], abcd, doprava, 3, 4, X, Y).
+
+krizovka([[xy,xy], [zw, zw], [xak, xak], [klm, klm], [n, n], [yb, yb], [l,l], [z,z], [cm, cm], [wdn,wdn]], abcd, doprava, 3, 4).
+
+krizovka([[xy,xy], [zw, zw], [xak, xak], [klm, klm], [n, n], [yb, yb], [l,l], [abcd, abcd], [wdn,wdn]], zcm, dole, 3, 4).
