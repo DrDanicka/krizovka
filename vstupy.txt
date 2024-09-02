@@ -59,3 +59,59 @@ Vizualizácia 5. krížovky:
 4 x i c e l 
 5 c n h a v 
 6 x a x a e
+
+---------------------------------------------------
+6. Vstup, kde je tajenka 'cab' v smere doprava:
+slovnik(X), krizovka(X, cab, doprava, 4, 3).
+
+Vizualizácia 6. krížovky:
+
+  A B C 
+1 a b d 
+2 c e e 
+3 c a b 
+4 a d e
+
+---------------------------------------------------
+7. Vstup, kde je tajenka 'aj' v smere dole:
+slovnik(X), krizovka(X, aj, dole, 2, 4).
+
+Vizualizácia 7. krížovky:
+
+  A B C D 
+1 i e a i 
+2 a d j i
+
+---------------------------------------------------
+8. Vstup, kde je tajenka 'lace' v smere doprava:
+slovnikEARIOTNSLC(X), krizovka(X, lace, doprava, 3, 4).
+
+Vizualizácia 8. krížovky:
+
+  A B C D 
+1 i i i e 
+2 l a c e 
+3 a c e s
+
+---------------------------------------------------
+9. Vstup, kde je tajenka 'air' v smere dole:
+slovnikEARIOTNSLC(X), krizovka(X, air, dole, 3, 4).
+
+Vizualizácia 9., krížovky:
+
+  A B C D 
+1 e e a e 
+2 a l i a 
+3 n a r r 
+
+---------------------------------------------------
+10. Vstup, kde je tajenka 'acne' v smere doprava:
+slovnikEARIOTNSLC(X), krizovka(X, acne, doprava, 4, 4).
+
+Vizualizácia 10. krížovky:
+
+  A B C D 
+1 e e r o
+2 e n a l
+3 a c n e 
+4 i n e s
