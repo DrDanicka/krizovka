@@ -1,3 +1,4 @@
+% V subore slovnik.pl sa nachadzaju pomocne slovniky pre niektore vstupy
 :- consult('slovnik.pl').
 
 % kizovka(+Slovnik, +Tajenka, +TajenkaSmer, +VyskaKrizovky, +SirkaKrizovky) :-
@@ -22,13 +23,13 @@ krizovka(Slovnik, Tajenka, TajenkaSmer, VyskaKrizovky, SirkaKrizovky) :-
 najdi_krizovku(Slovnik, Tajenka, TajenkaSmer, VyskaKrizovky, SirkaKrizovky, PouziteSlova) :-
     % Vytvorime si plochu krizovky
     % Okienka krizovky cislujeme od 0 do (VyskaKrizovky * SirkaKrizovky - 1)
-    vytvor_plochu(VyskaKrizovky, SirkaKrizovky, PlochaSoSlovom),
+    vytvor_plochu(VyskaKrizovky, SirkaKrizovky, Plocha),
 
     % Dostaneme cislo Okienka, kde chceme aby zacinala nasa tajenka
     vrat_okienko_tajenky(VyskaKrizovky, SirkaKrizovky, TajenkaSmer, OkienkoTajenky), % OkienkoTajenky je okienko, kde zacina tajenka
     
     % Vlozime tajenku do krizovky
-    prirad_tajenku(Tajenka, TajenkaSmer, OkienkoTajenky, VyskaKrizovky, SirkaKrizovky, PlochaSoSlovom, PlochaSTajenkou),
+    prirad_tajenku(Tajenka, TajenkaSmer, OkienkoTajenky, VyskaKrizovky, SirkaKrizovky, Plocha, PlochaSTajenkou),
 
     % Vygeneruje pozicie, kde budeme chciet umiestnit nase slova okrem Tajenky
     % Pozicie su list: [Okienko-Smer, ...] -> napr [0-dole, 1-dole, 0-doprava, 2-doprava]
