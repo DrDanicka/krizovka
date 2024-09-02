@@ -24,7 +24,7 @@ Vizualizácia 2. krížovky:
 3 k l m n
 
 ---------------------------------------------------
-3. Vstup, kde je tajenka 'baba' v smere doprava:
+3. Vstup, kde je tajenka 'baba' v smere doprava: (trva dlhsie)
 slovnik(X), krizovka(X, baba, doprava, 4, 4).
 
 Vizualizácia 3. krížovky:
@@ -89,9 +89,9 @@ slovnikEARIOTNSLC(X), krizovka(X, lace, doprava, 3, 4).
 Vizualizácia 8. krížovky:
 
   A B C D 
-1 i i i e 
+1 e n i e 
 2 l a c e 
-3 a c e s
+3 a c o r
 
 ---------------------------------------------------
 9. Vstup, kde je tajenka 'air' v smere dole:
